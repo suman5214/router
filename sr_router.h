@@ -29,6 +29,12 @@
 
 #define INIT_TTL 255
 #define PACKET_DUMP_SIZE 1024
+#define ETHER_PACKET_LEN sizeof(sr_ethernet_hdr_t)
+#define IP_PACKET_LEN (sizeof(sr_ethernet_hdr_t)+sizeof(sr_ip_hdr_t))
+#define ARP_PACKET_LEN (sizeof(sr_ethernet_hdr_t)+sizeof(sr_arp_hdr_t))
+#define ICMP_PACKET_LEN (sizeof(sr_ethernet_hdr_t)+sizeof(sr_ip_hdr_t)+sizeof(sr_icmp_hdr_t))
+#define ICMP_T3_PACKET_LEN (sizeof(sr_ethernet_hdr_t)+sizeof(sr_ip_hdr_t)+sizeof(sr_icmp_t3_hdr_t))
+
 
 /* forward declare */
 struct sr_if;
@@ -65,8 +71,24 @@ int sr_connect_to_server(struct sr_instance* ,unsigned short , char* );
 int sr_read_from_server(struct sr_instance* );
 
 /* -- sr_router.c -- */
-void sr_init(struct sr_instance* );
-void sr_handlepacket(struct sr_instance* , uint8_t * , unsigned int , char* );
+void sr_init(struct sr_instance* sr);
+void sr_handlepacket(struct sr_instance* sr, uint8_t *packet, unsigned int len, char* interface);
+void sr_handle_arppacket(struct sr_instance* sr, uint8_t *packet, unsigned int len, char* interface);
+void sr_handle_ippacket(struct sr_instance* sr, uint8_t *packet, unsigned int len, char* interface);
+sr_ethernet_hdr_t *get_eth_hdr(uint8_t *packet);
+sr_arp_hdr_t * get_arp_hdr(uint8_t *packet);
+sr_ip_hdr_t *get_ip_hdr(uint8_t *packet);
+sr_icmp_hdr_t *get_icmp_hdr(uint8_t *packet);
+void create_ethernet_hdr(sr_ethernet_hdr_t *eth_hdr, sr_ethernet_hdr_t *new_eth_hdr, struct sr_if *sr_iface);
+void create_back_arp_hdr(sr_arp_hdr_t *arp_hdr, sr_arp_hdr_t *new_arp_hdr, struct sr_if *sr_iface);
+void create_echo_ip_hdr(sr_ip_hdr_t *ip_hdr, sr_ip_hdr_t *new_ip_hdr, struct sr_if *sr_iface);
+void create_icmp_hdr(sr_icmp_hdr_t *icmp_hdr, sr_icmp_hdr_t *new_icmp_hdr, unsigned int len);
+void create_icmp_t3_hdr(sr_ip_hdr_t *ip_hdr, sr_icmp_t3_hdr_t *icmp_t3_hdr, uint8_t icmp_type, uint8_t icmp_code);
+int check_min_length(unsigned int len, unsigned int packet_len);
+int verify_checksum(void *_data, int len, uint16_t packet_cksum);
+struct sr_rt *sr_lpm(struct sr_instance *sr, uint32_t ip_dst);
+void send_arp_req_packet_broadcast(struct sr_instance *sr, char * out_iface, uint32_t dest_ip);
+struct sr_if *sr_get_router_if(struct sr_instance *sr, uint32_t ip);
 
 /* -- sr_if.c -- */
 void sr_add_interface(struct sr_instance* , const char* );
