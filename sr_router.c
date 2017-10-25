@@ -86,7 +86,7 @@ void sr_handlepacket(struct sr_instance* sr,
         printf('this is ip');
     }
   else{
-    printf('not right')
+    printf('not right');
   }
   /* fill in code here */
 
